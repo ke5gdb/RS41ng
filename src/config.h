@@ -39,9 +39,11 @@
 #define RADIO_TX_APRS_9600 false
 #define RADIO_TX_APRS_9600_COUNT 1
 #define RADIO_TX_HORUS_V2 false
-#define RADIO_TX_HORUS_V2_COUNT 5
-#define RADIO_TX_HORUS_V3 true
-#define RADIO_TX_HORUS_V3_COUNT 5
+#define RADIO_TX_HORUS_V2_COUNT 1
+#define RADIO_TX_HORUS_V3 false
+#define RADIO_TX_HORUS_V3_COUNT 1
+#define RADIO_TX_FAST_HORUS_V3 true
+#define RADIO_TX_FAST_HORUS_V3_COUNT 1
 #define RADIO_TX_CATS false
 #define RADIO_TX_CATS_COUNT 1
 #define RADIO_TX_LONG_TONE false
@@ -53,15 +55,16 @@
 #define RADIO_TX_HORUS_V3_CONTINUOUS false
 
 // Transmit frequencies for the transmitter modes
-#define RADIO_TX_FREQUENCY_CW        432501000
-#define RADIO_TX_FREQUENCY_PIP       432501000
-#define RADIO_TX_FREQUENCY_APRS_1200 432500000
-#define RADIO_TX_FREQUENCY_APRS_9600 432500000
+#define RADIO_TX_FREQUENCY_CW               432501000
+#define RADIO_TX_FREQUENCY_PIP              432501000
+#define RADIO_TX_FREQUENCY_APRS_1200        432500000
+#define RADIO_TX_FREQUENCY_APRS_9600        432500000
 // Use a frequency offset to place FSK tones slightly above the defined frequency for SSB reception
-#define RADIO_TX_FREQUENCY_HORUS_V2  432501000
-#define RADIO_TX_FREQUENCY_HORUS_V3  432501000
-#define RADIO_TX_FREQUENCY_CATS      434100000
-#define RADIO_TX_FREQUENCY_LONG_TONE 432501000
+#define RADIO_TX_FREQUENCY_HORUS_V2         432501000
+#define RADIO_TX_FREQUENCY_HORUS_V3         432501000
+#define RADIO_TX_FREQUENCY_FAST_HORUS_V3    432500000
+#define RADIO_TX_FREQUENCY_CATS             434100000
+#define RADIO_TX_FREQUENCY_LONG_TONE        432501000
 
 
 // Fox Mode -- disables GPS and follows transmit scheme above
@@ -238,6 +241,7 @@ Setting, measured RF output power, relative DC power draw
 #define HORUS_V3_PAYLOAD_CALLSIGN CALLSIGN
 #define HORUS_V3_BAUD_RATE_SI4032 100
 #define HORUS_V3_BAUD_RATE_SI4063 100
+#define HORUS_V3_BAUD_RATE_FAST_HORUS 2400
 #define HORUS_V3_BAUD_RATE_SI5351 50
 #define HORUS_V3_PREAMBLE_LENGTH 4
 #define HORUS_V3_TONE_SPACING_HZ_SI5351 270
@@ -247,6 +251,11 @@ Setting, measured RF output power, relative DC power draw
 #define HORUS_V3_TIME_SYNC_SECONDS 0
 // Delay transmission for an N second offset, counting from the scheduled time set with TIME_SYNC_SECONDS.
 #define HORUS_V3_TIME_SYNC_OFFSET_SECONDS 0
+
+// Fast Horus time sync settings
+#define FAST_HORUS_V3_TIME_SYNC_SECONDS 0
+#define FAST_HORUS_V3_TIME_SYNC_OFFSET_SECONDS 0
+
 
 /**
  * CATS mode settings

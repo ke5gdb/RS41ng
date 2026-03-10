@@ -16,6 +16,7 @@
 #define SI4063_DEVIATION_HZ_APRS 2600.0
 #define SI4063_DEVIATION_HZ_FM_CW 1000.0
 #define SI4063_DEVIATION_HZ_CATS 4800.0
+#define SI4063_DEVIATION_HZ_FAST_HORUS 3000.0
 #define SI4063_DEVIATION_HZ_APRS_9600 3000.0
 
 #define CW_SYMBOL_RATE_MULTIPLIER 4
@@ -73,6 +74,14 @@ bool radio_start_transmit_si4063(radio_transmit_entry *entry, radio_module_state
             data_timer_init(entry->fsk_encoder_api->get_symbol_rate(&entry->fsk_encoder));
             break;
         }
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
+            frequency_offset = 0;
+            frequency_deviation = SI4063_DEVIATION_HZ_FAST_HORUS_V3;
+            modulation_type = SI4063_MODULATION_TYPE_FIFO_FSK;
+            use_direct_mode = false;
+            use_fifo_mode = true;
+            data_rate = 2400;
+            break;
         case RADIO_DATA_MODE_CATS:
             frequency_offset = 0;
             frequency_deviation = SI4063_DEVIATION_HZ_CATS;
@@ -147,6 +156,7 @@ bool radio_start_transmit_si4063(radio_transmit_entry *entry, radio_module_state
             system_disable_tick();
             shared_state->radio_interrupt_transmit_active = true;
             break;
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
         case RADIO_DATA_MODE_CATS:
         case RADIO_DATA_MODE_APRS_9600:
             shared_state->radio_fifo_transmit_active = true;
@@ -429,6 +439,7 @@ bool radio_stop_transmit_si4063(radio_transmit_entry *entry, radio_module_state 
         case RADIO_DATA_MODE_HORUS_V3:
             data_timer_uninit();
             break;
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
         case RADIO_DATA_MODE_CATS:
         case RADIO_DATA_MODE_APRS_9600:
             break;
@@ -467,6 +478,7 @@ bool radio_stop_transmit_si4063(radio_transmit_entry *entry, radio_module_state 
         case RADIO_DATA_MODE_HORUS_V3:
             system_enable_tick();
             break;
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
         case RADIO_DATA_MODE_CATS:
         case RADIO_DATA_MODE_APRS_9600:
             break;

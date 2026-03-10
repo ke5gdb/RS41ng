@@ -169,6 +169,20 @@ radio_transmit_entry radio_transmit_schedule[] = {
                         },
                 #endif
         #endif
+        #if RADIO_TX_FAST_HORUS_V3
+                {
+                    .enabled = RADIO_TX_FAST_HORUS_V3,
+                    .radio_type = RADIO_TYPE_SI4032,
+                    .data_mode = RADIO_DATA_MODE_FAST_HORUS_V3,
+                    .transmit_count = RADIO_TX_FAST_HORUS_V3_COUNT,
+                    .time_sync_seconds = FAST_HORUS_V3_TIME_SYNC_SECONDS,
+                    .time_sync_seconds_offset = FAST_HORUS_V3_TIME_SYNC_OFFSET_SECONDS,
+                    .frequency = RADIO_TX_FREQUENCY_FAST_HORUS_V3,
+                    .tx_power = RADIO_SI4032_TX_POWER,
+                    .payload_encoder = &radio_horus_v3_payload_encoder,
+                    .fsk_encoder_api = &raw_fsk_encoder_api,
+                },
+        #endif
         #if RADIO_TX_CATS
                 {
                     .enabled = RADIO_TX_CATS,
@@ -319,6 +333,20 @@ radio_transmit_entry radio_transmit_schedule[] = {
                         .symbol_rate = HORUS_V3_BAUD_RATE_SI4063,
                         .payload_encoder = &radio_horus_v3_payload_encoder,
                         .fsk_encoder_api = &mfsk_fsk_encoder_api,
+                },
+        #endif
+        #if RADIO_TX_FAST_HORUS_V3
+                {
+                        .enabled = RADIO_TX_FAST_HORUS_V3,
+                        .radio_type = RADIO_TYPE_SI4063,
+                        .data_mode = RADIO_DATA_MODE_FAST_HORUS_V3,
+                        .transmit_count = RADIO_TX_FAST_HORUS_V3_COUNT,
+                        .time_sync_seconds = FAST_HORUS_V3_TIME_SYNC_SECONDS,
+                        .time_sync_seconds_offset = FAST_HORUS_V3_TIME_SYNC_OFFSET_SECONDS,
+                        .frequency = RADIO_TX_FREQUENCY_FAST_HORUS_V3,
+                        .tx_power = RADIO_SI4063_TX_POWER,
+                        .payload_encoder = &radio_horus_v3_payload_encoder,
+                        .fsk_encoder_api = &raw_fsk_encoder_api,
                 },
         #endif
         #if RADIO_TX_CATS
@@ -724,6 +752,7 @@ static bool radio_start_transmit(radio_transmit_entry *entry)
             entry->fsk_encoder_api->set_data(&entry->fsk_encoder, radio_current_payload_length, radio_current_payload);
             break;
         case RADIO_DATA_MODE_CATS:
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
         case RADIO_DATA_MODE_APRS_9600:
             enable_gps_during_transmit = true;
 
@@ -870,6 +899,8 @@ static bool radio_stop_transmit(radio_transmit_entry *entry)
             mfsk_encoder_destroy(&entry->fsk_encoder);
             break;
         case RADIO_DATA_MODE_CATS:
+        case RADIO_DATA_MODE_FAST_HORUS_V3:
+        case RADIO_DATA_MODE_APRS_9600:
             raw_encoder_destroy(&entry->fsk_encoder);
             break;
         case RADIO_DATA_MODE_WSPR:
@@ -1167,7 +1198,10 @@ void radio_init()
                 break;
             case RADIO_DATA_MODE_HORUS_V2:
             case RADIO_DATA_MODE_HORUS_V3:
+            case RADIO_DATA_MODE_FAST_HORUS_V3:
                 // No messages
+                break;
+            case RADIO_DATA_MODE_APRS_9600:
                 break;
             case RADIO_DATA_MODE_CATS:
                 entry->messages = cats_comment_templates;
