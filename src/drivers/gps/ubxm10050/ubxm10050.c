@@ -48,6 +48,7 @@
 #define UBX_CFG_VALSET          0x8A    /* Set configuration items */
 #define UBX_CFG_VALDEL          0x8C    /* Delete configuration items (revert to defaults) */
 #define UBX_CFG_RST             0x04    /* Reset receiver */
+#define UBX_MON_VER             0x04    /* Receiver/SW/HW version */
 #define UBX_ACK_ACK             0x01
 #define UBX_ACK_NAK             0x00
 
@@ -211,6 +212,7 @@ static gps_data m10_current_gps_data;
 static bool     m10_initialized = false;
 static volatile bool ack_received  = false;
 static volatile bool nack_received = false;
+static volatile bool monver_received = false;
 
 /* Parser state */
 static uint8_t  parse_sync     = 0;
@@ -447,6 +449,37 @@ static bool ubxm10050_valdel_keys(uint8_t layers,
 #endif
 
 /* -------------------------------------------------------------------------
+ * Revert all configuration to ROM defaults
+ * ------------------------------------------------------------------------- */
+
+static bool ubxm10050_revert_to_rom_defaults(void)
+{
+    /* CFG-VALDEL with wildcard key 0xFFFFFFFF deletes all user config
+     * from BBR, reverting every setting to the ROM default value. */
+    const uint32_t wildcard = 0xFFFFFFFFUL;
+    uint8_t buf[4 + 4];
+
+    buf[0] = 0x01;   /* version 1: supports layer bitmask */
+    buf[1] = VALSET_LAYER_BBR;
+    buf[2] = 0x00;   /* reserved */
+    buf[3] = 0x00;
+
+    buf[4] = (uint8_t)(wildcard & 0xFF);
+    buf[5] = (uint8_t)((wildcard >> 8) & 0xFF);
+    buf[6] = (uint8_t)((wildcard >> 16) & 0xFF);
+    buf[7] = (uint8_t)((wildcard >> 24) & 0xFF);
+
+    usart_gps_drain_dma();
+    parse_sync = 0;
+    parse_pos  = 0;
+
+    ubxm10050_send_raw(UBX_CLASS_CFG, UBX_CFG_VALDEL, buf, sizeof(buf));
+    bool success = ubxm10050_wait_for_ack();
+    log_info("GPS M10: Revert all config to ROM defaults: %s\n", success ? "ACK" : "NAK");
+    return success;
+}
+
+/* -------------------------------------------------------------------------
  * Cold reset
  * ------------------------------------------------------------------------- */
 
@@ -577,7 +610,28 @@ static void ubxm10050_handle_packet(uint8_t msgClass, uint8_t msgId,
         return;
     }
 
-    /* Silently ignore other messages (MON-VER etc.) */
+    if (msgClass == UBX_CLASS_MON && msgId == UBX_MON_VER) {
+        /* MON-VER payload: swVersion[30] + hwVersion[10] + extension[30]... */
+        if (len >= 40) {
+            char sw[31], hw[11];
+            memcpy(sw, payload, 30); sw[30] = '\0';
+            memcpy(hw, payload + 30, 10); hw[10] = '\0';
+            log_info("GPS M10: SW: %s\n", sw);
+            log_info("GPS M10: HW: %s\n", hw);
+            /* Print extension strings (30 bytes each) */
+            uint16_t offset = 40;
+            while (offset + 30 <= len) {
+                char ext[31];
+                memcpy(ext, payload + offset, 30); ext[30] = '\0';
+                log_info("GPS M10: EXT: %s\n", ext);
+                offset += 30;
+            }
+        }
+        monver_received = true;
+        return;
+    }
+
+    /* Silently ignore other messages */
     (void)len;
 }
 
@@ -761,9 +815,9 @@ bool ubxm10050_enable_power_save_mode(void)
     success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, minacq, 1);
     log_info("GPS M10: MINACQTIME=120: %s\n", success ? "ACK" : "NAK");
 
-    const ValsetU1 maxacq[] = {{ CFG_PM_MAXACQTIME, 255 }};
+    const ValsetU1 maxacq[] = {{ CFG_PM_MAXACQTIME, 0 }};
     success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, maxacq, 1);
-    log_info("GPS M10: MAXACQTIME=255: %s\n", success ? "ACK" : "NAK");
+    log_info("GPS M10: MAXACQTIME=0: %s\n", success ? "ACK" : "NAK");
 
     const ValsetU1 dneo[] = {{ CFG_PM_DONOTENTEROFF, 1 }};
     success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, dneo, 1);
@@ -868,6 +922,23 @@ bool ubxm10050_init(void)
     }
     log_info("\n");
 
+    /* Poll MON-VER to identify firmware version */
+    monver_received = false;
+    usart_gps_drain_dma();
+    parse_sync = 0;
+    parse_pos = 0;
+    ubxm10050_send_raw(UBX_CLASS_MON, UBX_MON_VER, NULL, 0);
+    {
+        uint32_t start = HAL_GetTick();
+        while ((HAL_GetTick() - start) < UBX_ACK_TIMEOUT_MS) {
+            usart_gps_drain_dma();
+            if (monver_received) break;
+        }
+        if (!monver_received) {
+            log_info("GPS M10: MON-VER timeout\n");
+        }
+    }
+
     /* Step 1: Set baud rate via CFG-VALSET.
      * The chip resets to 38400 by default. If GPS_SERIAL_PORT_BAUD_RATE
      * differs, set it in RAM first, then switch our UART to match. */
@@ -947,7 +1018,7 @@ bool ubxm10050_init(void)
 
 #if GPS_POWER_SAVING_ENABLE
     /* Step 4: Disable signals incompatible with PSM, write to RAM+BBR.
-     * Per MAX-M10S Integration Manual: B1C and SBAS are not supported in PSM.
+     * Per MIA-M10C Integration Manual: B1C and SBAS are not supported in PSM.
      * BBR storage ensures signal config survives PSMCT RAM clears during
      * "Inactive for search" state.
      * CFG-SIGNAL changes require a GNSS restart to take effect.
