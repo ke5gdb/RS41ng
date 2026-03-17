@@ -68,13 +68,14 @@ void telemetry_collect(telemetry_data *data)
 
     gps_driver_get_current_gps_data(&data->gps);
 
-    // RS41 RSM4X4 can enable power saving immediately
+    // RS41 RSM4X4: wait for fix before enabling power saving
+    // PSM modes may not activate properly if configured before acquisition
     #if GPS_POWER_SAVING_ENABLE && defined(RS41_RSM4x4)
-    if(!gps_power_saving_enabled) {
-        gps_driver_enable_power_save_mode();
+    if (GPS_HAS_FIX(data->gps) && (data->gps.satellites_visible >= 6) && !gps_power_saving_enabled) {
+        // gps_driver_enable_power_save_mode();
         gps_power_saving_enabled = true;
     }
-    #endif 
+    #endif
 
     if (GPS_HAS_FIX(data->gps)) {
         // If we have a good fix, we can enter power-saving mode

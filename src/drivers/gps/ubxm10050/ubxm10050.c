@@ -41,6 +41,7 @@
 #define UBX_CLASS_ACK           0x05
 
 /* Message IDs */
+#define UBX_NAV_STATUS          0x03    /* Receiver Navigation Status */
 #define UBX_NAV_PVT             0x07    /* Position, Velocity, Time */
 #define UBX_NAV_TIMEGPS         0x20    /* GPS Time */
 #define UBX_NAV_TIMEUTC         0x21    /* UTC Time */
@@ -194,6 +195,17 @@ typedef struct __attribute__((packed)) {
     uint8_t  valid;         /* bit2 = leapS valid */
     uint32_t tAcc;
 } UbxNavTimeGpsPayload;
+
+/* NAV-STATUS payload (16 bytes) */
+typedef struct __attribute__((packed)) {
+    uint32_t iTOW;          /* GPS time of week [ms] */
+    uint8_t  gpsFix;        /* GPS fix type */
+    uint8_t  flags;         /* bit0=gpsFixOk */
+    uint8_t  fixStat;       /* Fix status */
+    uint8_t  flags2;        /* bits[1:0]=psmState: 0=acq, 1=track, 2=POT, 3=inactive */
+    uint32_t ttff;          /* Time to first fix [ms] */
+    uint32_t msss;          /* Milliseconds since startup/reset */
+} UbxNavStatusPayload;
 
 /* RXM-PMREQ payload (M10 version - 16 bytes) */
 typedef struct __attribute__((packed)) {
@@ -590,6 +602,19 @@ static void ubxm10050_handle_packet(uint8_t msgClass, uint8_t msgId,
         return;
     }
 
+    if (msgClass == UBX_CLASS_NAV && msgId == UBX_NAV_STATUS) {
+        if (len < sizeof(UbxNavStatusPayload)) return;
+        const UbxNavStatusPayload *st = (const UbxNavStatusPayload *)payload;
+        uint8_t status_psm = st->flags2 & 0x03;
+#ifdef GPS_LOGGING_ENABLE
+        log_info("GPS NAV-STATUS: fix=%u fixOK=%u psmState=%u flags2=0x%02X ttff=%lu msss=%lu\n",
+                 st->gpsFix, st->flags & 0x01, status_psm, st->flags2,
+                 (unsigned long)st->ttff, (unsigned long)st->msss);
+#endif
+        (void)status_psm;
+        return;
+    }
+
     if (msgClass == UBX_CLASS_NAV && msgId == UBX_NAV_TIMEGPS) {
         if (len < sizeof(UbxNavTimeGpsPayload)) return;
         const UbxNavTimeGpsPayload *t = (const UbxNavTimeGpsPayload *)payload;
@@ -809,46 +834,28 @@ bool ubxm10050_enable_power_save_mode(void)
 
     log_info("GPS M10: Configuring PSMCT power save mode\n");
 
-    /* Send each parameter individually for diagnostics */
+    // success = ubxm10050_valset_u4(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_PM_POSUPDATEPERIOD, 1);
+    // log_info("GPS M10: POSUPDATEPERIOD=1: %s\n", success ? "ACK" : "NAK");
 
-    const ValsetU1 minacq[] = {{ CFG_PM_MINACQTIME, 120 }};
-    success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, minacq, 1);
-    log_info("GPS M10: MINACQTIME=120: %s\n", success ? "ACK" : "NAK");
+    // const ValsetU1 minacq[] = {{ CFG_PM_MINACQTIME, 0 }};
+    // success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, minacq, 1);
+    // log_info("GPS M10: MINACQTIME=0: %s\n", success ? "ACK" : "NAK");
 
-    const ValsetU1 maxacq[] = {{ CFG_PM_MAXACQTIME, 0 }};
-    success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, maxacq, 1);
-    log_info("GPS M10: MAXACQTIME=0: %s\n", success ? "ACK" : "NAK");
+    // success = ubxm10050_valset_u2(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_PM_ONTIME, 0);
+    // log_info("GPS M10: ONTIME=0: %s\n", success ? "ACK" : "NAK");
 
-    const ValsetU1 dneo[] = {{ CFG_PM_DONOTENTEROFF, 1 }};
-    success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, dneo, 1);
-    log_info("GPS M10: DONOTENTEROFF=1: %s\n", success ? "ACK" : "NAK");
+    // const ValsetU1 ueph[] = {{ CFG_PM_UPDATEEPH, 1 }};
+    // success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, ueph, 1);
+    // log_info("GPS M10: UPDATEEPH=1: %s\n", success ? "ACK" : "NAK");
 
-    /* ACQPERIOD: retry acquisition every 10s if fix is lost */
-    success = ubxm10050_valset_u4(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_PM_ACQPERIOD, 10);
-    log_info("GPS M10: ACQPERIOD=10: %s\n", success ? "ACK" : "NAK");
-
-    const ValsetU1 wtf[] = {{ CFG_PM_WAITTIMEFIX, 0 }};
-    success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, wtf, 1);
-    log_info("GPS M10: WAITTIMEFIX=0: %s\n", success ? "ACK" : "NAK");
-
-    const ValsetU1 ueph[] = {{ CFG_PM_UPDATEEPH, 1 }};
-    success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, ueph, 1);
-    log_info("GPS M10: UPDATEEPH=1: %s\n", success ? "ACK" : "NAK");
-
-    success = ubxm10050_valset_u2(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_PM_ONTIME, 0);
-    log_info("GPS M10: ONTIME=0: %s\n", success ? "ACK" : "NAK");
-
-    /* POSUPDATEPERIOD doesn't matter in cyclic tracking mode, just PSMOO */
-    success = ubxm10050_valset_u4(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_PM_POSUPDATEPERIOD, 5);
-    log_info("GPS M10: POSUPDATEPERIOD=5: %s\n", success ? "ACK" : "NAK");
-
-    success = ubxm10050_valset_u2(VALSET_LAYER_RAM | VALSET_LAYER_BBR, CFG_RATE_MEAS, GPS_MEASUREMENT_RATE);
-    log_info("GPS M10: RATE_MEAS=%d: %s\n", GPS_MEASUREMENT_RATE, success ? "ACK" : "NAK");
+    // const ValsetU1 dneo[] = {{ CFG_PM_DONOTENTEROFF, 1 }};
+    // success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, dneo, 1);
+    // log_info("GPS M10: DONOTENTEROFF=1: %s\n", success ? "ACK" : "NAK");
 
     /* OPERATEMODE last */
     const ValsetU1 mode[] = {{ CFG_PM_OPERATEMODE, 2 }};
     success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, mode, 1);
-    log_info("GPS M10: OPERATEMODE=2: %s\n", success ? "ACK" : "NAK");
+    log_info("GPS M10: OPERATEMODE=2 (PSMCT): %s\n", success ? "ACK" : "NAK");
     if (!success) {
         log_error("GPS M10: Failed to enable PSMCT\n");
         return false;
@@ -991,8 +998,8 @@ bool ubxm10050_init(void)
     log_info("GPS M10: Setting dynamic model and fix mode\n");
     {
         const ValsetU1 nav_items[] = {
-            { CFG_NAVSPG_DYNMODEL, GPS_DYNAMIC_MODEL },
-            { CFG_NAVSPG_FIXMODE,  GPS_POSITION_FIXING_MODE },
+            ///{ CFG_NAVSPG_DYNMODEL, GPS_DYNAMIC_MODEL },
+            // { CFG_NAVSPG_FIXMODE,  GPS_POSITION_FIXING_MODE },
             { CFG_NAVSPG_INFIL_MAXSVS, 64 },
         };
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR,
@@ -1025,17 +1032,17 @@ bool ubxm10050_init(void)
      * Send individually — one bad key NAKs an entire batched VALSET. */
     log_info("GPS M10: Configuring signals for PSM\n");
     {
-        const ValsetU1 bds_ena[]  = {{ CFG_SIGNAL_BDS_ENA,     1 }};
+        const ValsetU1 bds_ena[]  = {{ CFG_SIGNAL_BDS_ENA,     0 }};
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, bds_ena, 1);
-        log_info("GPS M10: BDS_ENA=1: %s\n", success ? "ACK" : "NAK");
+        log_info("GPS M10: BDS_ENA=0: %s\n", success ? "ACK" : "NAK");
 
         const ValsetU1 b1c_dis[]  = {{ CFG_SIGNAL_BDS_B1C_ENA, 0 }};
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, b1c_dis, 1);
         log_info("GPS M10: BDS_B1C_ENA=0: %s\n", success ? "ACK" : "NAK");
 
-        const ValsetU1 b1i_ena[]  = {{ CFG_SIGNAL_BDS_B1I_ENA, 1 }};
+        const ValsetU1 b1i_ena[]  = {{ CFG_SIGNAL_BDS_B1I_ENA, 0 }};
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, b1i_ena, 1);
-        log_info("GPS M10: BDS_B1I_ENA=1: %s\n", success ? "ACK" : "NAK");
+        log_info("GPS M10: BDS_B1I_ENA=0: %s\n", success ? "ACK" : "NAK");
 
         const ValsetU1 sbas_dis[] = {{ CFG_SIGNAL_SBAS_ENA,    0 }};
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR, sbas_dis, 1);
@@ -1063,6 +1070,8 @@ bool ubxm10050_init(void)
                            (const uint8_t *)&rst_start, sizeof(rst_start));
         delay_ms(1000);
     }
+
+    ubxm10050_enable_power_save_mode();
 #endif
 
     /* Step 5: Enable NAV-PVT at 1Hz on UART1, disable other nav messages (RAM+BBR) */
@@ -1072,7 +1081,7 @@ bool ubxm10050_init(void)
             { CFG_MSGOUT_NAV_PVT_UART1,     GPS_POSITION_MESSAGE_RATE },
             { CFG_MSGOUT_NAV_TIMEGPS_UART1, GPS_TIME_MESSAGE_RATE },
             { CFG_MSGOUT_NAV_TIMEUTC_UART1, 0 },  /* Not needed - PVT has UTC */
-            { CFG_MSGOUT_NAV_STATUS_UART1,  0 },  /* Not needed - PVT has fixOK */
+            { CFG_MSGOUT_NAV_STATUS_UART1,  1 },  /* Enable for PSM state diagnostics */
         };
         success = ubxm10050_valset_u1_multi(VALSET_LAYER_RAM | VALSET_LAYER_BBR,
                                              msg_items,
