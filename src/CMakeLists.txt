@@ -41,6 +41,17 @@ list(FILTER SOURCES_ASM EXCLUDE REGEX "${EXCLUDE_HAL_DIR}/.*")
 list(FILTER SOURCES_CXX EXCLUDE REGEX "${EXCLUDE_HAL_DIR}/.*")
 list(FILTER HEADERS EXCLUDE REGEX "${EXCLUDE_HAL_DIR}/.*")
 
+# Bootstrap sensor_cal.h from the committed example if the user has not
+# generated one yet. The real file is gitignored and produced by
+# tools/extract_rs41_cal.py from a radiosonde_auto_rx subframe dump.
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/sensor_cal.h)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/sensor_cal.h.example
+        ${CMAKE_CURRENT_SOURCE_DIR}/sensor_cal.h
+        COPYONLY
+    )
+endif()
+
 # --- Executable ---
 add_executable(${PROJECT_NAME}.elf
     ${SOURCES}

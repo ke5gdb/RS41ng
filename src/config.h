@@ -369,6 +369,17 @@ Setting, measured RF output power, relative DC power draw
 // The value is stored in the non-volatile memory of the microcontroller.
 #define SENSOR_RADSENS_SENSITIVITY 105
 
+// Enable the built-in RS41 sensor boom (PT main-T, capacitive RH, PT boom-T).
+// The ring-oscillator driver requires per-sonde factory calibration that is erased
+// when RS41ng is flashed. Before flashing, capture the sonde with radiosonde_auto_rx
+// and run tools/extract_rs41_cal.py on the resulting *_subframe.bin to generate
+// src/sensor_cal.h. See docs/sensor-boom.md for details.
+#define SENSOR_BOOM_ENABLE false
+// RH calculation model:
+//   false = empirical (get_RHemp, Tier-1 cal only, works with partial dumps)
+//   true  = physical  (get_RH2adv, requires Tier-2 cal — mtxH/corHp/corHt)
+#define SENSOR_BOOM_RH_MODEL_PHYSICAL false
+
 // Enable pulse counter via expansion header pin for use with devices like Geiger counters.
 // This disables the external I²C bus and the serial port as the expansion header pin 2 (I2C2_SDA (PB11) / UART3 RX) is used for pulse input.
 // Also changes the Horus 4FSK data format and adds a custom data field for pulse count.
