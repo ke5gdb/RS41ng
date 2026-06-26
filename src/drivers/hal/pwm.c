@@ -160,8 +160,10 @@ void pwm_timer_pwm_enable(bool enabled)
     if(enabled)
     {
         __HAL_TIM_MOE_ENABLE(&htim15);
+        __HAL_TIM_ENABLE(&htim15);
     } else {
-        __HAL_TIM_MOE_DISABLE(&htim15);
+        // Stop the counter so the output freezes at a steady level
+        htim15.Instance->CR1 &= ~TIM_CR1_CEN;
     }
 #endif
 #ifdef DFM17

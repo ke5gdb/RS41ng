@@ -116,6 +116,15 @@ void spi_uninit()
     gpio_init.Mode = GPIO_MODE_AF_PP;
     gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(BANK_MOSI, &gpio_init);
+
+    // Drive SCK low as a plain GPIO output while SPI is torn down. Fixes bug where
+    // SCK floating can cause long_tone to stop after a few seconds. 
+    gpio_init.Pin = PIN_SCK;
+    gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(BANK_SCK, &gpio_init);
+    HAL_GPIO_WritePin(BANK_SCK, PIN_SCK, GPIO_PIN_RESET);
 }
 
 void spi_send(uint8_t data)

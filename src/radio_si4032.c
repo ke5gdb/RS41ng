@@ -177,7 +177,10 @@ bool radio_start_transmit_si4032(radio_transmit_entry *entry, radio_module_state
             shared_state->radio_fifo_transmit_active = true;
             break;
         case RADIO_DATA_MODE_LONG_TONE:
-            #if !ENABLE_FM_CW
+            #if ENABLE_FM_CW
+            pwm_timer_pwm_enable(false);
+            pwm_timer_set_frequency(pwm_calculate_period(FM_TONE_FREQ * 100));
+            #else
             // CW carrier: hold SDI pin high for continuous carrier
             spi_uninit();
             si4032_use_sdi_pin(true);
@@ -258,14 +261,13 @@ static void radio_handle_main_loop_manual_si4032(radio_transmit_entry *entry, ra
         #endif
         case RADIO_DATA_MODE_LONG_TONE: {
             #if ENABLE_FM_CW
-            // Dead carrier before tone
-            pwm_timer_pwm_enable(false);
+            // Dead carrier before tone. PWM output is already disabled and the tone
+            // frequency was set in radio_start_transmit_si4032, so the carrier is clean
+            // (unmodulated) here rather than buzzing at the PWM init frequency.
             delay_ms(FM_CW_TX_DELAY);
 
             // FM tone
-            uint32_t tone_period = pwm_calculate_period(entry->symbol_rate * 100);
             pwm_timer_pwm_enable(true);
-            pwm_timer_set_frequency(tone_period);
             delay_ms(RADIO_TX_LONG_TONE_DURATION_SECONDS * 1000);
 
             // Dead carrier after tone
