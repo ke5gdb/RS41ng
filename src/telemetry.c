@@ -6,6 +6,7 @@
 #include "bme68x_handler.h"
 #include "bme690_handler.h"
 #include "boom_handler.h"
+#include "rpm411_handler.h"
 #include "radsens_handler.h"
 #include "locator.h"
 #include "config.h"
@@ -67,6 +68,12 @@ void telemetry_collect(telemetry_data *data)
     // Read after the I2C sensors: when combined with a BMP280/BME280 the boom
     // takes over temperature/humidity while pressure is kept from the I2C sensor.
     boom_read_telemetry(data);
+#endif
+
+#if SENSOR_RPM411_ENABLE
+    // Read last: the factory pressure module overrides any I2C sensor pressure.
+    // Blocks for the module's ~250 ms conversion time.
+    rpm411_read_telemetry(data);
 #endif
 
 #if PULSE_COUNTER_ENABLE

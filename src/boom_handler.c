@@ -10,9 +10,8 @@
 
 /**
  * Conversion of sensor boom oscillator frequencies to physical values using
- * the Vaisala factory calibration, as reverse engineered by rs1729/RS and
- * reproduced on-board by rs41-nfw. See docs/sensor-boom.md for the math and
- * the origin of the coefficients.
+ * the Vaisala factory calibration, as reverse engineered by rs1729/RS. See
+ * docs/sensor-boom.md for the math and the origin of the coefficients.
  *
  * The constants below are identical on every RS41 surveyed (149 sondes);
  * only the eight SENSOR_BOOM_CAL_* values in config.h are per-sonde.

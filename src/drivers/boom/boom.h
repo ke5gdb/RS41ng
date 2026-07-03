@@ -16,7 +16,7 @@
  * See docs/sensor-boom.md for the full interface description.
  */
 
-// Channel numbering follows rs41-nfw's selectSensorBoom()
+// Channel numbering: resistive (temperature-rail) channels first, then capacitive
 typedef enum _boom_channel {
     // Resistive channels (temperature rail)
     BOOM_CHANNEL_REF_750R = 1,           // 750 ohm reference resistor

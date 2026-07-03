@@ -11,6 +11,7 @@
 #include "bme68x_handler.h"
 #include "bme690_handler.h"
 #include "boom_handler.h"
+#include "rpm411_handler.h"
 #include "radsens_handler.h"
 #include "si5351_handler.h"
 #include "radio.h"
@@ -272,6 +273,20 @@ int main(void)
             break;
         }
         log_error("Sensor boom init failed, retrying...\n");
+    }
+    if (!success) {
+        set_red_led(true);
+    }
+#endif
+
+#if SENSOR_RPM411_ENABLE
+    for (int i = 0; i < 3; i++) {
+        log_info("RPM411 init\n");
+        success = rpm411_handler_init();
+        if (success) {
+            break;
+        }
+        log_error("RPM411 init failed, retrying...\n");
     }
     if (!success) {
         set_red_led(true);

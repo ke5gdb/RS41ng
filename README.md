@@ -257,6 +257,23 @@ bun run scripts/extract_boom_calibration.ts <subframe.bin | serial>
 See [docs/sensor-boom.md](docs/sensor-boom.md) for a detailed description of
 how the sensor boom interface works.
 
+### The original Vaisala RPM411 pressure module (RS41-SGP only)
+
+RS41ng can read barometric pressure from the original Vaisala RPM411 pressure
+module (`SENSOR_RPM411_ENABLE` / `rpm411_enable`). The module was a factory
+option: only sondes sold as RS41-SGP have it, so this setting is independent
+of the sensor boom. The module applies its factory calibration internally and
+returns finished pressure readings, so unlike the boom, no calibration
+extraction is needed — just enable the setting on a sonde that has the module.
+
+The RPM411 can be combined freely with the sensor boom (boom provides
+temperature/humidity, RPM411 provides pressure — the full RS41-SGP PTU set)
+and/or with an I²C sensor, in which case the RPM411 pressure reading takes
+precedence over the I²C sensor's.
+
+See [docs/pressure-sensor.md](docs/pressure-sensor.md) for a description of
+the module and its interface.
+
 Sensor driver code contributions are welcome!
 
 ### Planned features

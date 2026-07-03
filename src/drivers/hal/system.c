@@ -243,6 +243,13 @@ static void gpio_init()
     gpio_init.Pin = PIN_SPDT3;
     HAL_GPIO_Init(BANK_SPDT3, &gpio_init);
     HAL_GPIO_WritePin(BANK_SPDT3, PIN_SPDT3, GPIO_PIN_RESET);
+
+    // RPM411 pressure module chip select: drive high (deselected) before any
+    // SPI traffic so a module on the expansion connector ignores radio bytes.
+    // Harmless on sondes without the module.
+    gpio_init.Pin = PIN_RPM411_CS;
+    HAL_GPIO_Init(BANK_RPM411_CS, &gpio_init);
+    HAL_GPIO_WritePin(BANK_RPM411_CS, PIN_RPM411_CS, GPIO_PIN_SET);
 #endif
 }
 

@@ -108,6 +108,10 @@
 #define BANK_BOOM_MEAS	GPIOA
 #define PIN_BOOM_MEAS	GPIO_PIN_1
 
+// RPM411 pressure module chip select (expansion connector, shared SPI bus)
+#define BANK_RPM411_CS	GPIOB
+#define PIN_RPM411_CS	GPIO_PIN_2
+
 #else ///////////////////////////////////  It's a classic RSM4x2 ///////////////////////////////////
 #define BANK_SHUTDOWN	GPIOA
 #define PIN_SHUTDOWN	GPIO_PIN_12
@@ -200,6 +204,10 @@
 // Sensor boom oscillator output (TIM2 channel 2)
 #define BANK_BOOM_MEAS	GPIOA
 #define PIN_BOOM_MEAS	GPIO_PIN_1
+
+// RPM411 pressure module chip select (expansion connector, shared SPI bus)
+#define BANK_RPM411_CS	GPIOB
+#define PIN_RPM411_CS	GPIO_PIN_2
 
 #endif // Classic RS41
 

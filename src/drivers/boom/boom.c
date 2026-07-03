@@ -19,7 +19,7 @@
 // channel dead. Live channels produce an edge every ~10-20 us; this is a few
 // tens of milliseconds.
 #define BOOM_EDGE_POLL_TIMEOUT 200000
-// Oscillator settling time after switching a channel in (from rs41-nfw)
+// Oscillator settling time after switching a channel in
 #define BOOM_SETTLE_TIME_MS 18
 
 void boom_power_down(void)
@@ -116,7 +116,7 @@ float boom_measure_frequency(boom_channel channel)
     TIM2->CR1 = 0;
     TIM2->PSC = 0;
     TIM2->ARR = 0xFFFFFFFFU; // Truncates to 16 bits on the F100, 32 bits on the L412
-    TIM2->CCMR1 = TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_2; // TI2 input, glitch filter (fDTS/2, N=6, as rs41-nfw)
+    TIM2->CCMR1 = TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_2; // TI2 input, glitch filter (fDTS/2, N=6)
     TIM2->CCER = TIM_CCER_CC2E; // Capture on rising edge
     TIM2->SR = 0;
     TIM2->EGR = TIM_EGR_UG;

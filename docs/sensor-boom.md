@@ -15,18 +15,17 @@ for the meteorological measurements:
 There is no interface chip on the boom — the bare sensor elements connect
 through a flex cable directly to analog circuitry on the main PCB, and
 everything is done in firmware. That is what makes it possible for third-party
-firmware such as [rs41-nfw](https://github.com/Nevvman18/rs41-nfw) (and now
-RS41ng) to read the original sensors.
+firmware like RS41ng to read the original sensors.
 
-This document describes exactly how rs41-nfw interfaces with the boom, where
-the calibration math and coefficients come from, and how the same interface is
-implemented in RS41ng.
+This document describes how the boom interface works at the hardware level,
+where the calibration math and coefficients come from, and how RS41ng
+implements it.
 
 Sources used throughout:
 
-- **rs41-nfw** firmware (`selectSensorBoom()`, `getSensorBoomFreq()`,
-  `sensorBoomHandler()` in `rs41-nfw_sonde-firmware.ino`) — the working
-  reference for the pin-level interface.
+- **The RS41 hardware documentation** ([bazjo's schematic and logic-analyzer
+  captures](https://github.com/bazjo/RS41_Hardware)) — the measurement circuit,
+  multiplexer truth table and STM32 pin map.
 - **rs1729/RS** (`rs41/rs41ptu.c`, `demod/mod/rs41mod.c`) — the reverse
   engineering of Vaisala's own calibration math, reproduced by every RS41
   telemetry decoder.
@@ -103,9 +102,8 @@ Notes:
 
 ## Measurement channels
 
-rs41-nfw numbers the channels 1–7 (the argument to `selectSensorBoom()` /
-`getSensorBoomFreq()`). Selecting a channel means: raise the rail bias pin,
-raise that channel's switch pin, and drive the other rail's bias pin low.
+The channels are numbered 1–7. Selecting a channel means: raise the rail bias
+pin, raise that channel's switch pin, and drive the other rail's bias pin low.
 
 | Ch | Switch | Rail | Connects | Typical frequency |
 |---|---|---|---|---|
@@ -122,17 +120,17 @@ the **period rises linearly** with R (or C). A full measurement cycle reads
 all seven channels; the references (1, 2, 6, 7) are re-measured every cycle so
 the ratiometric math always uses fresh values.
 
-## How rs41-nfw measures a channel
+## How a channel is measured
 
-`getSensorBoomFreq()` in rs41-nfw does, in order:
+To measure one channel, RS41ng does, in order:
 
 1. **Select the channel** and wait **18 ms** for the oscillator to settle.
 2. **Configure TIM2** for input capture on channel 2 (PA1): prescaler 0 (full
    timer clock), capture on every rising edge. On the F100 the timer is
    16-bit; on the L412 it is 32-bit.
 3. **Disable all interrupts** (`__disable_irq()`). Any ISR that lands between
-   captures adds latency jitter; on the F100, nfw additionally disconnects an
-   idle UART RX pin that was found to inject edge noise.
+   captures adds latency jitter. (On the F100, an idle UART RX pin has also been
+   observed to inject edge noise into the capture.)
 4. Busy-wait for the **first rising edge**, then capture **2400 consecutive
    periods**, accumulating the tick deltas between captures
    (`totalTicks += current - previous`, with 16-bit wraparound arithmetic on
@@ -156,9 +154,9 @@ channels are treated identically, any constant scale factor cancels.
 
 Every RS41 transmits its per-sonde factory calibration in flight (one 16-byte
 "subframe" block per telemetry frame, 51 blocks total). rs1729's decoders
-reconstructed the math that Vaisala's ground software applies; rs41-nfw
-reproduces the same math on board ("factory / Vaisala calibration", its mode
-2), and RS41ng uses this as its only calibration path.
+reconstructed the math that Vaisala's ground software applies; RS41ng evaluates
+that same factory calibration on board, and uses it as its only calibration
+path.
 
 In the formulas below `m = 1/f` (a value proportional to the oscillator
 period) and `m1`, `m2` are the same quantity for the low and high reference
@@ -211,8 +209,8 @@ saturation at *air* temperature, so the reading at the warmer sensor must be
 scaled up by the vapor-pressure ratio.
 
 (The full Vaisala chain also includes a pressure-dependent correction using
-the `vectorBp`/`matrixBt` coefficients. Like rs41-nfw, RS41ng omits it: it
-requires a pressure measurement, and its effect is small in the troposphere.)
+the `vectorBp`/`matrixBt` coefficients. RS41ng omits it: it requires a pressure
+measurement, and its effect is small in the troposphere.)
 
 ### Which coefficients are per-sonde?
 
@@ -334,8 +332,7 @@ The interface is split in the usual RS41ng driver/handler pattern:
 
 - [`src/drivers/boom/boom.c`](../src/drivers/boom/boom.c) — the hardware
   layer: channel selection (analog switches + rail bias pins from `gpio.h`)
-  and frequency measurement (TIM2 CH2 input capture on PA1, same procedure as
-  rs41-nfw, both MCU families).
+  and frequency measurement (TIM2 CH2 input capture on PA1, both MCU families).
 - [`src/boom_handler.c`](../src/boom_handler.c) — the measurement cycle and
   the factory calibration math; fills `temperature_celsius_100` and
   `humidity_percentage_100` in the telemetry struct, from which the values
@@ -377,20 +374,24 @@ Configuration (see `config.h`):
 
 ### What RS41ng does not implement (and why)
 
-rs41-nfw carries additional boom machinery that RS41ng intentionally leaves
-out, at least for now:
+The boom hardware supports additional machinery that RS41ng intentionally
+leaves out, at least for now:
 
-- **The "NFW" generic calibration mode** (reference-ratio + ideal PT1000
-  curve + empirical humidity corrections). It exists in nfw mainly because
-  factory coefficients weren't always available; with the subframe extraction
-  path, the factory math is both simpler and more accurate.
+- **A generic (non-factory) calibration mode** — recovering temperature and
+  humidity from the ideal PT1000 curve plus empirical corrections, without the
+  per-sonde factory coefficients. This is useful when the factory coefficients
+  are not available, but with the subframe extraction path the factory math is
+  both simpler and more accurate, so RS41ng only implements the factory mode.
 - **Humidity sensor heating, reconditioning and zero-humidity calibration**
-  (`HEAT_HUM1/2` PWM, heat-to-140 °C cycles). These support nfw's generic
-  humidity mode and de-icing; the factory calibration does not require them.
+  (`HEAT_HUM1/2` PWM, heat-to-140 °C cycles). These support de-icing and the
+  generic humidity mode; the factory calibration does not require them.
   Without de-icing, expect the humidity reading to lag or saturate after
   passing through supercooled clouds — same caveat as any unheated sensor.
 - **The reference heating resistors** (`HEAT_REF`, PC6): Vaisala uses them to
   keep the PCB reference section warm; not required for the measurement to
   work.
-- **Pressure** (RS41-SGP's separate SPI pressure module) and the
-  pressure-dependent humidity correction.
+- **The pressure-dependent humidity correction.** Pressure itself is now
+  supported on RS41-SGP sondes via the RPM411 module (`SENSOR_RPM411_ENABLE`,
+  see [pressure-sensor.md](pressure-sensor.md)), but the full Vaisala humidity
+  correction chain that uses it has not been ported; the empirical
+  low-temperature correction above is used instead.

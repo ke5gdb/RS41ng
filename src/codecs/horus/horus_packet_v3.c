@@ -110,12 +110,16 @@ size_t horus_packet_v3_create(uint8_t *payload, telemetry_data *data){
 
 
     if(data->ext_sensor_type != NO_EXT_SENSOR) {
-        if (data->temperature_celsius_100 >= -10230 && data->temperature_celsius_100 <= 10230) {
+        // The RPM411 pressure module provides pressure only; skip the external
+        // temperature/humidity fields, which would otherwise read as 0.
+        if (data->temperature_celsius_100 >= -10230 && data->temperature_celsius_100 <= 10230
+                && data->ext_sensor_type != SENSOR_RPM411) {
             asnMessage.temperatureCelsius_x10.external = CLAMP((int16_t)(data->temperature_celsius_100 / 10), -1023, 1023);
             asnMessage.temperatureCelsius_x10.exist.external = true;
         }
 
-        if (data->humidity_percentage_100 >= 0 && data->humidity_percentage_100 <= 10000 && data->ext_sensor_type != SENSOR_BMP280) {
+        if (data->humidity_percentage_100 >= 0 && data->humidity_percentage_100 <= 10000
+                && data->ext_sensor_type != SENSOR_BMP280 && data->ext_sensor_type != SENSOR_RPM411) {
             asnMessage.humidityPercentage = CLAMP((uint8_t)(data->humidity_percentage_100 / 100), 0, 100);
             asnMessage.exist.humidityPercentage = true;
         }

@@ -53,6 +53,7 @@ typedef enum _sensor_type {
     SENSOR_BME68X,
     SENSOR_BME690,
     SENSOR_BOOM,
+    SENSOR_RPM411,
 } sensor_type;
 
 #if SENSOR_BOOM_ENABLE && !defined(RS41)

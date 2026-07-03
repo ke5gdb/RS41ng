@@ -17,6 +17,9 @@ uint8_t spi_receive();
 
 uint8_t spi_read();
 
+// Full-duplex single-byte exchange (spi_read with a caller-supplied TX byte)
+uint8_t spi_transfer(uint8_t data);
+
 void spi_set_chip_select(GPIO_TypeDef *gpio_cs, uint16_t pin_cs, bool select);
 
 uint8_t spi_send_and_receive(GPIO_TypeDef *gpio_cs, uint16_t pin_cs, uint16_t data);

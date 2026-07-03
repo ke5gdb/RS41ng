@@ -793,6 +793,9 @@ sensors:
   #   applies when: sensors.boom_enable
   #   defines SENSOR_BOOM_CAL_U1
   boom_cal_u1: 5.067065
+  # Enable RPM411 Pressure Module — Read barometric pressure from the original Vaisala RPM411 module (RS41-SGP only). The pressure module was a factory option, so it is independent of the sensor boom; enable it only on sondes that have the extra board on the expansion connector. The module is factory calibrated internally, so no calibration extraction is needed. Overrides I2C sensor pressure readings. See docs/pressure-sensor.md. [advanced]
+  #   defines SENSOR_RPM411_ENABLE
+  rpm411_enable: false
   # Enable Si5351 HF Radio — External I2C Si5351 clock generator for HF transmissions (WSPR, FT8, JT modes) [advanced]
   #   defines RADIO_SI5351_ENABLE
   si5351_enable: false

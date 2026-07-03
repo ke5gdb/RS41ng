@@ -457,6 +457,16 @@ Setting, measured RF output power, relative DC power draw
 #define SENSOR_BOOM_CAL_U1 5.067065f         // calibU[1]: humidity capacitance scale
 #endif
 
+// Enable use of the original Vaisala RPM411 barometric pressure module (RS41-SGP only).
+// The pressure module was a factory option: most RS41s (RS41-SG) do not have it, so this is
+// independent of SENSOR_BOOM_ENABLE. The module applies its factory calibration internally
+// and returns finished pressure readings, so no calibration extraction is needed.
+// Can be combined with the sensor boom (boom: temperature/humidity, RPM411: pressure) and/or
+// an I2C sensor (the RPM411 pressure overrides the I2C pressure reading).
+// If enabled on a sonde without the module, an error is logged and pressure is not reported.
+// See docs/pressure-sensor.md for details.
+#define SENSOR_RPM411_ENABLE false
+
 // Enable pulse counter via expansion header pin for use with devices like Geiger counters.
 // This disables the external I²C bus and the serial port as the expansion header pin 2 (I2C2_SDA (PB11) / UART3 RX) is used for pulse input.
 // Also changes the Horus 4FSK data format and adds a custom data field for pulse count.

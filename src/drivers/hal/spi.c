@@ -164,6 +164,15 @@ uint8_t spi_read()
     return rx_data;
 }
 
+uint8_t spi_transfer(uint8_t data)
+{
+    uint8_t rx_data = 0x00;
+
+    while (__HAL_SPI_GET_FLAG(&hspi, SPI_FLAG_BSY) == SET);
+    HAL_SPI_TransmitReceive(&hspi, &data, &rx_data, 1, 10);
+    return rx_data;
+}
+
 void spi_set_chip_select(GPIO_TypeDef *gpio_cs, uint16_t pin_cs, bool select)
 {
     HAL_GPIO_WritePin(gpio_cs, pin_cs, select ? GPIO_PIN_RESET : GPIO_PIN_SET);

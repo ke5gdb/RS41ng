@@ -31,6 +31,7 @@ Exit codes: 0 = success, 1 = usage/parse/download error
 
 import argparse
 import base64
+import gzip
 import json
 import struct
 import sys
@@ -120,7 +121,11 @@ def download_subframe(serial):
     print(f"Downloading telemetry for {serial} from SondeHub...", file=sys.stderr)
     try:
         with urllib.request.urlopen(url, timeout=60) as response:
-            frames = json.load(response)
+            body = response.read()
+            # SondeHub serves gzip regardless of Accept-Encoding
+            if body[:2] == b"\x1f\x8b":
+                body = gzip.decompress(body)
+            frames = json.loads(body)
     except Exception as e:
         die(f"SondeHub request failed: {e}")
     if not isinstance(frames, list):

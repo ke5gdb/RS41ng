@@ -1913,6 +1913,20 @@ sensors:
     tier: advanced
     visible_when: "sensors.boom_enable"
 
+  rpm411_enable:
+    define: SENSOR_RPM411_ENABLE
+    label: "Enable RPM411 Pressure Module"
+    description: >-
+      Read barometric pressure from the original Vaisala RPM411 module (RS41-SGP
+      only). The pressure module was a factory option, so it is independent of
+      the sensor boom; enable it only on sondes that have the extra board on the
+      expansion connector. The module is factory calibrated internally, so no
+      calibration extraction is needed. Overrides I2C sensor pressure readings.
+      See docs/pressure-sensor.md.
+    type: bool
+    default: false
+    tier: advanced
+
   si5351_enable:
     define: RADIO_SI5351_ENABLE
     label: "Enable Si5351 HF Radio"

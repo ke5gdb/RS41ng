@@ -39,7 +39,12 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
 
-_Min_Heap_Size = 0x0;   /* no heap used in this firmware */
+/* The firmware itself does not use the heap, but semihosting logging does:
+ * newlib printf allocates its reent structure and stdio buffer on first use,
+ * and _sbrk() (syscalls.c) aborts with "Out of memory!" when the allocation
+ * would pass __HeapLimit = _end + heap + stack reserve. Keep enough heap for
+ * newlib-nano stdio. */
+_Min_Heap_Size = 0x1000;   /* heap for newlib stdio (semihosting logging) */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
