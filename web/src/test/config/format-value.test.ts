@@ -87,6 +87,16 @@ describe("formatValue — integer", () => {
   });
 });
 
+describe("formatValue — float", () => {
+  it("emits a single-precision C literal", () => {
+    expect(formatValue(field({ type: "float" }), 1.16010785)).toBe("1.16010785f");
+  });
+
+  it("preserves negative values and string numbers", () => {
+    expect(formatValue(field({ type: "float" }), "-0.091475673")).toBe("-0.091475673f");
+  });
+});
+
 describe("formatValue — hex", () => {
   it("returns value as-is", () => {
     expect(formatValue(field({ type: "hex" }), "0x1234ABCD")).toBe("0x1234ABCD");

@@ -5,6 +5,7 @@
 #include "bmp280_handler.h"
 #include "bme68x_handler.h"
 #include "bme690_handler.h"
+#include "boom_handler.h"
 #include "radsens_handler.h"
 #include "locator.h"
 #include "config.h"
@@ -60,6 +61,12 @@ void telemetry_collect(telemetry_data *data)
 
 #if SENSOR_RADSENS_ENABLE
     radsens_read_telemetry(data);
+#endif
+
+#if SENSOR_BOOM_ENABLE
+    // Read after the I2C sensors: when combined with a BMP280/BME280 the boom
+    // takes over temperature/humidity while pressure is kept from the I2C sensor.
+    boom_read_telemetry(data);
 #endif
 
 #if PULSE_COUNTER_ENABLE

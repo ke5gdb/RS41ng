@@ -26,6 +26,9 @@ export function formatValue(field: SchemaField, value: unknown): string {
       return value === true || value === "true" ? "true" : "false";
     case "integer":
       return String(Number(value));
+    case "float":
+      // Emit as a single-precision C literal; preserve the value's own digits
+      return `${Number(value)}f`;
     case "hex":
       return String(value);
     case "frequency":

@@ -26,6 +26,11 @@ import { buildDefaults } from "../web/src/config/defaults";
 import { validateConfig } from "../web/src/config/validation";
 import { generateConfigH } from "../web/src/config/generate-header";
 import { generateConfigC } from "../web/src/config/generate-source";
+import {
+  parseSubframe,
+  verifyUniversalConstants,
+  boomConfigValues,
+} from "../web/src/config/boom-subframe";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,6 +58,67 @@ function mergeWithDefaults(schema: Schema, userConfig: unknown): ConfigState {
     }
   }
   return merged;
+}
+
+/**
+ * CLI-only convenience: `sensors.boom_calibration_file` in config.yaml points
+ * at a radiosonde_auto_rx subframe dump (see docs/sensor-boom.md); the eight
+ * SENSOR_BOOM_CAL_* coefficients are extracted from it at build time instead
+ * of being pasted into the YAML. The key is not part of the schema (the web
+ * configurator cannot read local files), so it is consumed and removed here
+ * before validation/generation. Coefficients set explicitly in the YAML take
+ * precedence over the file, with a warning.
+ */
+function applyBoomCalibrationFile(userConfig: ConfigState, configYamlPath: string) {
+  const sensors = userConfig.sensors as ConfigSection | undefined;
+  const calFile = sensors?.boom_calibration_file;
+  if (calFile === undefined) return;
+  if (typeof calFile !== "string" || calFile === "") {
+    die("sensors.boom_calibration_file must be a file path");
+  }
+  delete sensors!.boom_calibration_file;
+
+  // Relative paths resolve against the config file's own directory
+  const calPath = resolve(dirname(resolve(configYamlPath)), calFile);
+  let raw: Uint8Array;
+  try {
+    raw = new Uint8Array(readFileSync(calPath));
+  } catch (e: any) {
+    die(`Failed to read boom calibration file ${calPath}: ${e.message}`);
+  }
+
+  let cal;
+  try {
+    cal = parseSubframe(raw);
+  } catch (e: any) {
+    die(`Failed to parse boom calibration file ${calPath}: ${e.message}`);
+  }
+
+  for (const warning of verifyUniversalConstants(cal)) {
+    console.warn(`WARNING: ${calFile}: ${warning}`);
+  }
+
+  console.log(
+    `Sensor boom calibration: ${cal.serial} (${cal.variant}) from ${calFile}`
+  );
+
+  if (sensors!.boom_enable === undefined) {
+    console.warn(
+      "WARNING: sensors.boom_calibration_file is set but sensors.boom_enable is not; " +
+        "add 'boom_enable: true' to actually enable the sensor boom."
+    );
+  }
+
+  for (const [key, value] of Object.entries(boomConfigValues(cal))) {
+    if (sensors![key] !== undefined) {
+      console.warn(
+        `WARNING: sensors.${key} is set explicitly in the config and overrides ` +
+          `the value from ${calFile} (${sensors![key]} vs ${value})`
+      );
+      continue;
+    }
+    sensors![key] = value;
+  }
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -94,6 +160,9 @@ function main() {
   } catch (e: any) {
     die(`Failed to load config from ${configYamlPath}: ${e.message}`);
   }
+
+  // Resolve sensors.boom_calibration_file (CLI-only key) into coefficients
+  applyBoomCalibrationFile(userConfig, configYamlPath);
 
   // Validate via the shared validator (same rules and conflict detection as the web UI)
   const result = validateConfig(schema, mergeWithDefaults(schema, userConfig));

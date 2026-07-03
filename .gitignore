@@ -24,6 +24,9 @@
 /src/config_generated.c
 /src/config_generated.h
 
+# Per-sonde sensor boom calibration header from scripts/extract_boom_calibration.py
+/src/config_boom_cal.h
+
 # Node/Bun dependencies (bun.lock files are committed — Bun is the canonical package manager)
 /node_modules/
 /web/node_modules/

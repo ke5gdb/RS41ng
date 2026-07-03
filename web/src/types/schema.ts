@@ -4,6 +4,7 @@ export type FieldType =
   | "string"
   | "bool"
   | "integer"
+  | "float"
   | "hex"
   | "frequency"
   | "char"

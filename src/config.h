@@ -425,6 +425,38 @@ Setting, measured RF output power, relative DC power draw
 // The value is stored in the non-volatile memory of the microcontroller.
 #define SENSOR_RADSENS_SENSITIVITY 105
 
+// Enable use of the original Vaisala sensor boom for true air temperature and humidity (RS41 only).
+// The boom sensors are read through the on-board measurement oscillator and converted with the
+// sonde's factory calibration. The eight SENSOR_BOOM_CAL_* coefficients below are unique to each
+// sonde: extract them from a radiosonde_auto_rx subframe dump (or SondeHub) with either
+//   python3 scripts/extract_boom_calibration.py <subframe.bin | serial>
+// which writes src/config_boom_cal.h (a supplemental header that overrides the defaults below
+// and enables the boom), or
+//   bun run scripts/extract_boom_calibration.ts <subframe.bin | serial>
+// which prints values to paste here or into config.yaml.
+// The defaults are fleet averages and give only rough absolute accuracy (several degrees C).
+// Can be combined with a BMP280/BME280: the boom then provides temperature/humidity and the
+// I2C sensor still provides pressure. See docs/sensor-boom.md for details.
+#if defined(__has_include)
+#if __has_include("config_boom_cal.h")
+#include "config_boom_cal.h"
+#endif
+#endif
+
+#ifndef SENSOR_BOOM_ENABLE
+#define SENSOR_BOOM_ENABLE false
+#endif
+#ifndef SENSOR_BOOM_CAL_T
+#define SENSOR_BOOM_CAL_T 1.082771f          // calT: main temperature resistance gain
+#define SENSOR_BOOM_CAL_POLY_T0 -0.133869f   // polyT[0]: main temperature offset
+#define SENSOR_BOOM_CAL_POLY_T1 0.007139f    // polyT[1]: main temperature scale trim
+#define SENSOR_BOOM_CAL_TU 1.317314f         // calTU: humidity-sensor temperature resistance gain
+#define SENSOR_BOOM_CAL_POLY_TRH0 -0.210610f // polyTrh[0]: humidity-sensor temperature offset
+#define SENSOR_BOOM_CAL_POLY_TRH1 0.009892f  // polyTrh[1]: humidity-sensor temperature scale trim
+#define SENSOR_BOOM_CAL_U0 43.257160f        // calibU[0]: humidity capacitance normalization
+#define SENSOR_BOOM_CAL_U1 5.067065f         // calibU[1]: humidity capacitance scale
+#endif
+
 // Enable pulse counter via expansion header pin for use with devices like Geiger counters.
 // This disables the external I²C bus and the serial port as the expansion header pin 2 (I2C2_SDA (PB11) / UART3 RX) is used for pulse input.
 // Also changes the Horus 4FSK data format and adds a custom data field for pulse count.

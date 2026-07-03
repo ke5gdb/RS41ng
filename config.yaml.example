@@ -758,6 +758,41 @@ sensors:
   #   applies when: sensors.radsens_enable
   #   defines SENSOR_RADSENS_SENSITIVITY
   radsens_sensitivity: 105
+  # Enable Vaisala Sensor Boom — Read true air temperature and humidity from the original Vaisala sensor boom using the sonde's factory calibration. The calibration coefficients below are unique to each sonde: extract them from a radiosonde_auto_rx subframe dump or SondeHub with scripts/extract_boom_calibration.ts. In config.yaml-based builds you can instead set sensors.boom_calibration_file to the path of a subframe .bin file and the coefficients are extracted at build time. The defaults are fleet averages with only rough absolute accuracy. See docs/sensor-boom.md. [advanced]
+  #   defines SENSOR_BOOM_ENABLE
+  boom_enable: false
+  # Boom Cal: calT — Main temperature resistance gain (subframe calT) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_T
+  boom_cal_t: 1.082771
+  # Boom Cal: polyT[0] — Main temperature offset (subframe polyT[0]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_POLY_T0
+  boom_cal_poly_t0: -0.133869
+  # Boom Cal: polyT[1] — Main temperature scale trim (subframe polyT[1]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_POLY_T1
+  boom_cal_poly_t1: 0.007139
+  # Boom Cal: calTU — Humidity-sensor temperature resistance gain (subframe calTU) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_TU
+  boom_cal_tu: 1.317314
+  # Boom Cal: polyTrh[0] — Humidity-sensor temperature offset (subframe polyTrh[0]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_POLY_TRH0
+  boom_cal_poly_trh0: -0.21061
+  # Boom Cal: polyTrh[1] — Humidity-sensor temperature scale trim (subframe polyTrh[1]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_POLY_TRH1
+  boom_cal_poly_trh1: 0.009892
+  # Boom Cal: calibU[0] — Humidity capacitance normalization (subframe calibU[0]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_U0
+  boom_cal_u0: 43.25716
+  # Boom Cal: calibU[1] — Humidity capacitance scale (subframe calibU[1]) [advanced]
+  #   applies when: sensors.boom_enable
+  #   defines SENSOR_BOOM_CAL_U1
+  boom_cal_u1: 5.067065
   # Enable Si5351 HF Radio — External I2C Si5351 clock generator for HF transmissions (WSPR, FT8, JT modes) [advanced]
   #   defines RADIO_SI5351_ENABLE
   si5351_enable: false

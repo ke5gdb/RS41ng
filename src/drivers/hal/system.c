@@ -191,10 +191,16 @@ static void gpio_init()
     HAL_GPIO_Init(BANK_CURRENT, &gpio_init);
 #endif
 
-#ifdef RS41_RSM4x4
-    // Disable oscillator bias rails and analog switches on RSM4x4.
+#ifdef RS41
+    // Disable oscillator bias rails and analog switches.
     // All pins driven low to cut power to the temperature/humidity
     // ring oscillators and disconnect the analog signal paths.
+
+#ifndef RS41_RSM4x4
+    // On the F100, SPDT1 (PB3) and SPDT2 (PB4) are JTAG pins by default.
+    // Remap SWJ to SWD-only to release them as GPIO (SWD on PA13/PA14 is kept).
+    __HAL_AFIO_REMAP_SWJ_NOJTAG();
+#endif
 
     gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
     gpio_init.Speed = GPIO_SPEED_FREQ_LOW;

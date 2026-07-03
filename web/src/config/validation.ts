@@ -47,7 +47,7 @@ export function validateField(
     }
   }
 
-  if (field.type === "integer" || field.type === "frequency") {
+  if (field.type === "integer" || field.type === "float" || field.type === "frequency") {
     const num = Number(value);
     if (isNaN(num)) {
       errors.push(`${field.label} must be a number`);

@@ -104,6 +104,10 @@
 #define BANK_SPDT3	GPIOC
 #define PIN_SPDT3	GPIO_PIN_12
 
+// Sensor boom oscillator output (TIM2 channel 2)
+#define BANK_BOOM_MEAS	GPIOA
+#define PIN_BOOM_MEAS	GPIO_PIN_1
+
 #else ///////////////////////////////////  It's a classic RSM4x2 ///////////////////////////////////
 #define BANK_SHUTDOWN	GPIOA
 #define PIN_SHUTDOWN	GPIO_PIN_12
@@ -168,6 +172,34 @@
 #define EXT_USART_IRQn		USART3_IRQn
 #define EXT_USART_CLK_ENABLE()	__HAL_RCC_USART3_CLK_ENABLE()
 #define EXT_USART_CLK_DISABLE()	__HAL_RCC_USART3_CLK_DISABLE()
+
+// Oscillator bias rail pullups
+#define BANK_PULLUP_TM	GPIOB
+#define PIN_PULLUP_TM	GPIO_PIN_12
+#define BANK_PULLUP_HYG	GPIOA
+#define PIN_PULLUP_HYG	GPIO_PIN_2
+
+// Analog switch control
+// NOTE: SPDT1 (PB3) and SPDT2 (PB4) are JTAG pins on the F100; system_init()
+// remaps SWJ to SWD-only so they can be driven as GPIO.
+#define BANK_SPST1	GPIOB
+#define PIN_SPST1	GPIO_PIN_6
+#define BANK_SPST2	GPIOA
+#define PIN_SPST2	GPIO_PIN_3
+#define BANK_SPST3	GPIOC
+#define PIN_SPST3	GPIO_PIN_14
+#define BANK_SPST4	GPIOC
+#define PIN_SPST4	GPIO_PIN_15
+#define BANK_SPDT1	GPIOB
+#define PIN_SPDT1	GPIO_PIN_3
+#define BANK_SPDT2	GPIOB
+#define PIN_SPDT2	GPIO_PIN_4
+#define BANK_SPDT3	GPIOB
+#define PIN_SPDT3	GPIO_PIN_5
+
+// Sensor boom oscillator output (TIM2 channel 2)
+#define BANK_BOOM_MEAS	GPIOA
+#define PIN_BOOM_MEAS	GPIO_PIN_1
 
 #endif // Classic RS41
 

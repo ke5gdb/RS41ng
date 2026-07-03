@@ -52,6 +52,11 @@ typedef enum _sensor_type {
     SENSOR_BME280,
     SENSOR_BME68X,
     SENSOR_BME690,
+    SENSOR_BOOM,
 } sensor_type;
+
+#if SENSOR_BOOM_ENABLE && !defined(RS41)
+#error The sensor boom is only present on RS41 hardware.
+#endif
 
 #endif

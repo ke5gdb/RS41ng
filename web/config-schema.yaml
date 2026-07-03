@@ -1826,6 +1826,93 @@ sensors:
       min: 1
       max: 65535
 
+  boom_enable:
+    define: SENSOR_BOOM_ENABLE
+    label: "Enable Vaisala Sensor Boom"
+    description: >
+      Read true air temperature and humidity from the original Vaisala sensor boom
+      using the sonde's factory calibration. The calibration coefficients below are
+      unique to each sonde: extract them from a radiosonde_auto_rx subframe dump or
+      SondeHub with scripts/extract_boom_calibration.ts. In config.yaml-based builds
+      you can instead set sensors.boom_calibration_file to the path of a subframe
+      .bin file and the coefficients are extracted at build time. The defaults are
+      fleet averages with only rough absolute accuracy. See docs/sensor-boom.md.
+    type: bool
+    default: false
+    tier: advanced
+
+  boom_cal_t:
+    define: SENSOR_BOOM_CAL_T
+    label: "Boom Cal: calT"
+    description: "Main temperature resistance gain (subframe calT)"
+    type: float
+    default: 1.082771
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_poly_t0:
+    define: SENSOR_BOOM_CAL_POLY_T0
+    label: "Boom Cal: polyT[0]"
+    description: "Main temperature offset (subframe polyT[0])"
+    type: float
+    default: -0.133869
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_poly_t1:
+    define: SENSOR_BOOM_CAL_POLY_T1
+    label: "Boom Cal: polyT[1]"
+    description: "Main temperature scale trim (subframe polyT[1])"
+    type: float
+    default: 0.007139
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_tu:
+    define: SENSOR_BOOM_CAL_TU
+    label: "Boom Cal: calTU"
+    description: "Humidity-sensor temperature resistance gain (subframe calTU)"
+    type: float
+    default: 1.317314
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_poly_trh0:
+    define: SENSOR_BOOM_CAL_POLY_TRH0
+    label: "Boom Cal: polyTrh[0]"
+    description: "Humidity-sensor temperature offset (subframe polyTrh[0])"
+    type: float
+    default: -0.210610
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_poly_trh1:
+    define: SENSOR_BOOM_CAL_POLY_TRH1
+    label: "Boom Cal: polyTrh[1]"
+    description: "Humidity-sensor temperature scale trim (subframe polyTrh[1])"
+    type: float
+    default: 0.009892
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_u0:
+    define: SENSOR_BOOM_CAL_U0
+    label: "Boom Cal: calibU[0]"
+    description: "Humidity capacitance normalization (subframe calibU[0])"
+    type: float
+    default: 43.257160
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
+  boom_cal_u1:
+    define: SENSOR_BOOM_CAL_U1
+    label: "Boom Cal: calibU[1]"
+    description: "Humidity capacitance scale (subframe calibU[1])"
+    type: float
+    default: 5.067065
+    tier: advanced
+    visible_when: "sensors.boom_enable"
+
   si5351_enable:
     define: RADIO_SI5351_ENABLE
     label: "Enable Si5351 HF Radio"

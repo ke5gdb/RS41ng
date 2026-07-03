@@ -222,6 +222,41 @@ The following sensors are currently supported:
   - https://www.tindie.com/stores/climateguard/
   - https://github.com/climateguard/RadSens
 
+### The original Vaisala sensor boom (RS41 only)
+
+RS41ng can read true air temperature and humidity from the sonde's original
+sensor boom, using the sonde's own factory calibration coefficients
+(`SENSOR_BOOM_ENABLE`). The coefficients are extracted from the calibration
+data the sonde transmitted while still running the Vaisala firmware — either
+from a radiosonde_auto_rx subframe dump or from SondeHub.
+
+In `config.yaml`-based builds, simply point the config at the subframe dump
+and the coefficients are extracted automatically at build time:
+
+```yaml
+sensors:
+  boom_enable: true
+  boom_calibration_file: cal/20260702-110653_X4643493_RS41-NG_404801_subframe.bin
+```
+
+In `config.h`-based builds, generate a supplemental calibration header
+instead — `config.h` picks it up automatically and it overrides the defaults
+(delete `src/config_boom_cal.h` to revert):
+
+```
+python3 scripts/extract_boom_calibration.py <subframe.bin | serial>
+```
+
+Alternatively, extract the values manually and paste them into the
+configuration:
+
+```
+bun run scripts/extract_boom_calibration.ts <subframe.bin | serial>
+```
+
+See [docs/sensor-boom.md](docs/sensor-boom.md) for a detailed description of
+how the sensor boom interface works.
+
 Sensor driver code contributions are welcome!
 
 ### Planned features

@@ -19,6 +19,7 @@ import { validateField } from "@/config/validation";
 import StringField from "./fields/StringField.vue";
 import BoolField from "./fields/BoolField.vue";
 import IntegerField from "./fields/IntegerField.vue";
+import FloatField from "./fields/FloatField.vue";
 import HexField from "./fields/HexField.vue";
 import FrequencyField from "./fields/FrequencyField.vue";
 import CharField from "./fields/CharField.vue";
@@ -30,6 +31,7 @@ const TYPE_MAP = {
   string: StringField,
   bool: BoolField,
   integer: IntegerField,
+  float: FloatField,
   hex: HexField,
   frequency: FrequencyField,
   char: CharField,
