@@ -37,6 +37,8 @@ static uint32_t     transmit_counter;         /* seconds spent in TRANSMITTING (
 static uint32_t     pip_counter;              /* seconds until next PIP while SLEEPING */
 static uint32_t     pipping_counter;          /* seconds spent in PIPPING */
 static landed_state pip_return_state;         /* state to return to after PIPPING completes */
+static uint32_t     pip_sequence;             /* count of pip cycles since landing; drives locator cadence */
+static bool         locator_cycle;            /* current PIPPING cycle sends the CW locator message */
 static uint16_t     ok_packets_at_wake;       /* snapshot of GPS ok_packets at wake; used to detect whether new data has arrived */
 #if LANDED_MODE_TEST_SECONDS > 0
 static uint32_t     test_counter;             /* seconds of uptime in INACTIVE (bench test) */
@@ -139,33 +141,36 @@ static void schedule_set_transmit_once(void)
     }
 }
 
-/* Configure schedule for PIPPING: disable every entry except PIP modes so the
- * normal main loop only fires a PIP. */
-static void schedule_set_pip_only(void)
+/* Configure schedule for PIPPING: disable every entry except the ones for this
+ * cycle — PIP entries for a plain pip, or the dedicated CW locator entry when
+ * this cycle carries the position message. */
+static void schedule_set_pip_only(bool locator)
 {
     schedule_save_if_needed();
     uint8_t n = radio_transmit_entry_count;
     if (n > LANDED_MAX_SCHEDULE_ENTRIES) n = LANDED_MAX_SCHEDULE_ENTRIES;
     for (uint8_t i = 0; i < n; i++) {
-        if (radio_transmit_schedule[i].data_mode == RADIO_DATA_MODE_PIP) {
-            /* Force-enable PIP entries (dedicated landed-mode PIP entry starts disabled). */
-            radio_transmit_schedule[i].enabled = true;
-        } else {
-            radio_transmit_schedule[i].enabled = false;
-        }
+        /* Force-enable this cycle's entries (dedicated landed-mode entries start disabled). */
+        radio_transmit_schedule[i].enabled = locator
+                ? radio_transmit_schedule[i].landed_locator
+                : (radio_transmit_schedule[i].data_mode == RADIO_DATA_MODE_PIP);
     }
 }
 
 /* Begin a PIP cycle: configure the schedule for PIP-only, clear pass_completed
- * on PIP entries, and transition into PIPPING.  Caller is responsible for
+ * on this cycle's entries, and transition into PIPPING.  Every Nth cycle sends
+ * the CW locator message instead of a plain pip.  Caller is responsible for
  * setting `pip_return_state` to the state to resume after the cycle. */
 static void start_pipping(void)
 {
-    schedule_set_pip_only();
+    pip_sequence++;
+    locator_cycle = (LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS > 0)
+            && (pip_sequence % LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS == 0);
+    schedule_set_pip_only(locator_cycle);
     uint8_t n = radio_transmit_entry_count;
     if (n > LANDED_MAX_SCHEDULE_ENTRIES) n = LANDED_MAX_SCHEDULE_ENTRIES;
     for (uint8_t i = 0; i < n; i++) {
-        if (radio_transmit_schedule[i].data_mode == RADIO_DATA_MODE_PIP) {
+        if (radio_transmit_schedule[i].enabled) {
             radio_transmit_schedule[i].pass_completed = false;
             radio_transmit_schedule[i].current_transmit_index = 0;
         }
@@ -287,6 +292,8 @@ void landed_init(void)
     pip_counter         = 0;
     pipping_counter     = 0;
     pip_return_state    = LANDED_STATE_SLEEPING;
+    pip_sequence        = 0;
+    locator_cycle       = false;
     ok_packets_at_wake  = 0;
     landing_lat         = 0;
     landing_lon         = 0;
@@ -417,7 +424,8 @@ bool landed_update(gps_data *gps)
                 /* Note: do NOT check `enabled` here — radio_next_transmit_entry()
                  * auto-disables the entry at the same moment it sets pass_completed
                  * during PIPPING, so the two flags are never both true together. */
-                if (radio_transmit_schedule[i].data_mode == RADIO_DATA_MODE_PIP
+                if ((radio_transmit_schedule[i].data_mode == RADIO_DATA_MODE_PIP
+                     || radio_transmit_schedule[i].landed_locator)
                     && radio_transmit_schedule[i].pass_completed) {
                     schedule_restore();
                     /* Only inhibit the radio if we're returning to SLEEPING.
@@ -432,7 +440,9 @@ bool landed_update(gps_data *gps)
                 }
             }
         }
-        if (pipping_counter >= 30) {
+        /* Locator cycles send a full morse message, which takes far longer
+         * than a pip (roughly 1 s per character at 15 WPM). */
+        if (pipping_counter >= (locator_cycle ? 60U : 30U)) {
             /* Safety timeout. */
             log_info("LANDED: PIP safety timeout\n");
             schedule_restore();

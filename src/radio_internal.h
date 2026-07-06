@@ -38,6 +38,11 @@ typedef struct _radio_transmit_entry {
     bool enabled;
     bool end;
 
+    // Dedicated landed-mode CW locator entry: enabled by the landed module on
+    // locator pip cycles and uses landed_cw_message_templates instead of the
+    // regular CW templates.
+    bool landed_locator;
+
     radio_type radio_type;
     radio_data_mode data_mode;
 

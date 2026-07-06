@@ -49,21 +49,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                 .payload_encoder = &radio_horus_v2_payload_encoder,
                 .fsk_encoder_api = &mfsk_fsk_encoder_api,
         },
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,
-                        .radio_type = RADIO_TYPE_SI4032,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4032_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
     #elif RADIO_TX_HORUS_V3_CONTINUOUS
         {
                 .enabled = true,
@@ -91,21 +76,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                     .fsk_encoder_api = &mfsk_fsk_encoder_api,
             },
         #endif
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,
-                        .radio_type = RADIO_TYPE_SI4032,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4032_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
     #else // (not) HORUS Continuous
         #if RADIO_TX_PIP
                 {
@@ -115,21 +85,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                         .transmit_count = RADIO_TX_PIP_COUNT,
                         .time_sync_seconds = PIP_TIME_SYNC_SECONDS,
                         .time_sync_seconds_offset = PIP_TIME_SYNC_OFFSET_SECONDS,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4032_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,  // Landed module enables this during PIPPING
-                        .radio_type = RADIO_TYPE_SI4032,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
                         .frequency = RADIO_TX_FREQUENCY_PIP,
                         .tx_power = RADIO_SI4032_TX_POWER,
                         .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
@@ -258,6 +213,37 @@ radio_transmit_entry radio_transmit_schedule[] = {
                 },
         #endif
     #endif // HORUS Continuous
+    #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
+        {
+                .enabled = false,  // Landed module enables this during PIPPING
+                .radio_type = RADIO_TYPE_SI4032,
+                .data_mode = RADIO_DATA_MODE_PIP,
+                .transmit_count = RADIO_TX_PIP_COUNT,
+                .time_sync_seconds = 0,
+                .time_sync_seconds_offset = 0,
+                .frequency = RADIO_TX_FREQUENCY_PIP,
+                .tx_power = RADIO_SI4032_TX_POWER,
+                .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
+                .payload_encoder = &radio_cw_payload_encoder,
+                .fsk_encoder_api = &morse_fsk_encoder_api,
+        },
+        #if LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS > 0
+        {
+                .enabled = false,  // Landed module enables this on locator pip cycles
+                .landed_locator = true,
+                .radio_type = RADIO_TYPE_SI4032,
+                .data_mode = RADIO_DATA_MODE_CW,
+                .transmit_count = 1,
+                .time_sync_seconds = 0,
+                .time_sync_seconds_offset = 0,
+                .frequency = RADIO_TX_FREQUENCY_PIP,
+                .tx_power = RADIO_SI4032_TX_POWER,
+                .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(LANDED_MODE_CW_SPEED_WPM),
+                .payload_encoder = &radio_cw_payload_encoder,
+                .fsk_encoder_api = &morse_fsk_encoder_api,
+        },
+        #endif
+    #endif
 #endif // RS41
 
 #ifdef DFM17
@@ -275,21 +261,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                     .payload_encoder = &radio_horus_v2_payload_encoder,
                     .fsk_encoder_api = &mfsk_fsk_encoder_api,
             },
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,
-                        .radio_type = RADIO_TYPE_SI4063,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4063_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
     #elif RADIO_TX_HORUS_V3_CONTINUOUS
             {
                     .enabled = true,
@@ -303,21 +274,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                     .payload_encoder = &radio_horus_v3_payload_encoder,
                     .fsk_encoder_api = &mfsk_fsk_encoder_api,
             },
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,
-                        .radio_type = RADIO_TYPE_SI4063,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4063_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
     #else // (not) HORUS Continuous
         #if RADIO_TX_PIP
                 {
@@ -327,21 +283,6 @@ radio_transmit_entry radio_transmit_schedule[] = {
                         .transmit_count = RADIO_TX_PIP_COUNT,
                         .time_sync_seconds = PIP_TIME_SYNC_SECONDS,
                         .time_sync_seconds_offset = PIP_TIME_SYNC_OFFSET_SECONDS,
-                        .frequency = RADIO_TX_FREQUENCY_PIP,
-                        .tx_power = RADIO_SI4063_TX_POWER,
-                        .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
-                        .payload_encoder = &radio_cw_payload_encoder,
-                        .fsk_encoder_api = &morse_fsk_encoder_api,
-                },
-        #endif
-        #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
-                {
-                        .enabled = false,  // Landed module enables this during PIPPING
-                        .radio_type = RADIO_TYPE_SI4063,
-                        .data_mode = RADIO_DATA_MODE_PIP,
-                        .transmit_count = RADIO_TX_PIP_COUNT,
-                        .time_sync_seconds = 0,
-                        .time_sync_seconds_offset = 0,
                         .frequency = RADIO_TX_FREQUENCY_PIP,
                         .tx_power = RADIO_SI4063_TX_POWER,
                         .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
@@ -455,6 +396,37 @@ radio_transmit_entry radio_transmit_schedule[] = {
                 },
         #endif
     #endif // HORUS Continuous
+    #if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE
+        {
+                .enabled = false,  // Landed module enables this during PIPPING
+                .radio_type = RADIO_TYPE_SI4063,
+                .data_mode = RADIO_DATA_MODE_PIP,
+                .transmit_count = RADIO_TX_PIP_COUNT,
+                .time_sync_seconds = 0,
+                .time_sync_seconds_offset = 0,
+                .frequency = RADIO_TX_FREQUENCY_PIP,
+                .tx_power = RADIO_SI4063_TX_POWER,
+                .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(PIP_SPEED_WPM),
+                .payload_encoder = &radio_cw_payload_encoder,
+                .fsk_encoder_api = &morse_fsk_encoder_api,
+        },
+        #if LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS > 0
+        {
+                .enabled = false,  // Landed module enables this on locator pip cycles
+                .landed_locator = true,
+                .radio_type = RADIO_TYPE_SI4063,
+                .data_mode = RADIO_DATA_MODE_CW,
+                .transmit_count = 1,
+                .time_sync_seconds = 0,
+                .time_sync_seconds_offset = 0,
+                .frequency = RADIO_TX_FREQUENCY_PIP,
+                .tx_power = RADIO_SI4063_TX_POWER,
+                .symbol_rate = MORSE_WPM_TO_SYMBOL_RATE(LANDED_MODE_CW_SPEED_WPM),
+                .payload_encoder = &radio_cw_payload_encoder,
+                .fsk_encoder_api = &morse_fsk_encoder_api,
+        },
+        #endif
+    #endif
 #endif // DFM17
 
 // Si5351
@@ -1309,7 +1281,11 @@ void radio_init()
         radio_transmit_entry *entry = &radio_transmit_schedule[i];
         switch (entry->data_mode) {
             case RADIO_DATA_MODE_CW:
+#if LANDED_MODE_ENABLE && LANDED_MODE_PIP_ENABLE && LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS > 0
+                entry->messages = entry->landed_locator ? landed_cw_message_templates : cw_message_templates;
+#else
                 entry->messages = cw_message_templates;
+#endif
                 break;
             case RADIO_DATA_MODE_PIP:
                 entry->messages = pip_message_templates;

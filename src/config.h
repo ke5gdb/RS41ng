@@ -210,6 +210,18 @@ Setting, measured RF output power, relative DC power draw
 // Uses the existing PIP radio infrastructure (morse 'E' character).
 #define LANDED_MODE_PIP_ENABLE true
 #define LANDED_MODE_PIP_INTERVAL_SECONDS 10
+// Replace every Nth pip with a CW message containing the landing position, so a
+// recovery team can locate the payload with nothing but an FM handheld (enable
+// ENABLE_FM_CW to make the morse audible on FM). The message template is
+// landed_cw_message_templates in config.c; the default sends the callsign and a
+// 12-character Maidenhead locator. 12 characters are required for 10 m precision:
+// a 10-character locator cell is ~19 m x 39 m, while the 12-character cell is
+// ~1.9 m x 3.9 m. The position is the last GPS fix (the landing site).
+// Set to 0 to disable and send plain pips only.
+#define LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS 6
+// Morse speed for the landed-mode locator message, range 5 - 40 WPM.
+// Slower is easier to copy by ear in the field.
+#define LANDED_MODE_CW_SPEED_WPM 15
 // When true, LEDs are forced off during landed sleep/acquire states and only
 // enabled during TRANSMITTING or PIPPING to conserve power.
 #define LANDED_MODE_LEDS_TRANSMIT_ONLY true

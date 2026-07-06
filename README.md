@@ -210,6 +210,8 @@ When enabled, landed mode conserves battery after the balloon has landed. It is 
 
 Landed mode is recommended on launches that will not be immediately chased or if a delayed recovery is expected. Preliminary testing indicates that landed mode can allow transmissions to exceed 72 hours with Lithium AA batteries.
 
+While sleeping, landed mode emits a short "pip" every `LANDED_MODE_PIP_INTERVAL_SECONDS` for direction finding. Every Nth pip (`LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS`, default every 6th) is replaced with a CW message containing the landing position as a 12-character Maidenhead locator, so a recovery team can find the payload with nothing but an FM handheld when `ENABLE_FM_CW` is set. Twelve locator characters are needed for 10-meter precision: a 10-character locator cell is roughly 19 m x 39 m, while the 12-character cell is roughly 2 m x 4 m. The message template (default `$cs $loc12`) and the CW speed (`LANDED_MODE_CW_SPEED_WPM`) are configurable; see `landed_cw_message_templates` in `config.c`.
+
 ### External sensors
 
 It is possible to connect external sensors to the I²C bus.

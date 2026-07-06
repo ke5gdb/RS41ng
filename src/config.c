@@ -80,6 +80,17 @@ char *pip_message_templates[] = {
 };
 
 /**
+ * Landed mode CW locator messages, sent in place of every Nth pip
+ * (see LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS). Multiple messages rotate one per cycle.
+ * The 12-character locator pinpoints the landing site to ~2 m x 4 m (10-char is only ~19 m x 39 m).
+ * Maximum length: 64 characters.
+ */
+char *landed_cw_message_templates[] = {
+        "$cs $loc12",
+        NULL
+};
+
+/**
  * APRS mode comment messages.
  * Maximum length: depends on the packet contents, but keeping this under 100 characters is usually safe.
  * Note that many hardware APRS receivers show a limited number of APRS comment characters, such as 43 or 67 chars.

@@ -32,12 +32,22 @@
 // normal, so the first few failures stay silent to avoid a spurious 5s strobe.
 #define GPS_INIT_RED_LED_RETRY_THRESHOLD 3
 
+// Fallbacks for configs that predate the landed-mode CW locator options
+// (0 = feature disabled, plain pips only).
+#ifndef LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS
+#define LANDED_MODE_CW_LOCATOR_EVERY_N_PIPS 0
+#endif
+#ifndef LANDED_MODE_CW_SPEED_WPM
+#define LANDED_MODE_CW_SPEED_WPM 15
+#endif
+
 #include <stdbool.h>
 
 extern volatile bool system_initialized;
 
 extern char *cw_message_templates[];
 extern char *pip_message_templates[];
+extern char *landed_cw_message_templates[];
 extern char *aprs_comment_templates[];
 extern char *cats_comment_templates[];
 extern char *fsq_comment_templates[];
